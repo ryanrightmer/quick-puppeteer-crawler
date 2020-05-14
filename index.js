@@ -1,4 +1,5 @@
 const puppeteer = require("puppeteer");
+const fs = require("fs");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -6,7 +7,7 @@ function sleep(ms) {
 
 (async () => {
   try {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: false });
     var page = await browser.newPage();
     await page.goto(
       "https://odysseypa.traviscountytx.gov/JPPublicAccess/default.aspx"
@@ -43,18 +44,16 @@ function sleep(ms) {
     let hrefs = await page.evaluate(() =>
       Array.from(document.body.querySelectorAll("a[href]"), ({ href }) => href)
     );
-    console.log(hrefs);
     hrefs = hrefs.filter((x) => {
-      console.log(x, x.includes("CaseID"));
       return x.includes("CaseID=");
     });
-    console.log(hrefs);
     for (let i = 0; i < hrefs.length; i++) {
       console.log(i);
       await page.goto(hrefs[i]);
       await sleep(1000);
       let bodyHTML = await page.evaluate(() => document.body.innerHTML);
-      console.log(bodyHTML);
+      var filename = hrefs[i].replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      fs.writeFileSync(filename + ".html", bodyHTML);
       page.goBack();
     }
 
